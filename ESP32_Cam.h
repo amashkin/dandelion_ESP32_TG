@@ -1,7 +1,5 @@
 /*******************************************************************
-Some of the camera code comes from Rui Santos:
-https://randomnerdtutorials.com/esp32-cam-take-photo-save-microsd-card/
-Written by Brian Lough
+Some of the camera code comes from Rui Santos. Main parts by Brian Lough
 *******************************************************************/
 
 #define CAMERA_MODEL_AI_THINKER //SHOULD BE Defined here !!! 
@@ -23,19 +21,11 @@ Written by Brian Lough
 //#define CAMERA_MODEL_M5STACK_WIDE
 // #define CAMERA_MODEL_AI_THINKER                              !!!
 
-/*
-// Wifi network station credentials
-#define WIFI_SSID "TP-Link_1160"
-#define WIFI_PASSWORD "41985465"
-// Telegram BOT Token (Get from Botfather)
-#define BOT_TOKEN "6265866767:AAHef29xdGChANaMybeysFrWHIao9to1Dqc"
-*/
-
 #define FLASH_LED_PIN 4
 
 const unsigned long BOT_MTBS = 1000; // mean time between scan messages
 
-unsigned long bot_lasttime; // last time messages' scan has been done
+unsigned long bot_lasttime;          // last time messages' scan has been done
 WiFiClientSecure secured_client;
 UniversalTelegramBot bot(BOT_TOKEN, secured_client);
 
@@ -49,13 +39,11 @@ int getNextBufferLen();
 
 bool dataAvailable = false;
 
-void handleNewMessages(int numNewMessages)
-{
+void handleNewMessages(int numNewMessages) {
   Serial.println("handleNewMessages");
   Serial.println(String(numNewMessages));
 
-  for (int i = 0; i < numNewMessages; i++)
-  {
+  for (int i = 0; i < numNewMessages; i++) {
     String chat_id = String(bot.messages[i].chat_id);
     String text = bot.messages[i].text;
 
@@ -63,19 +51,16 @@ void handleNewMessages(int numNewMessages)
     if (from_name == "")
       from_name = "Guest";
 
-    if (text == "/flash")
-    {
+    if (text == "/flash") {
       flashState = !flashState;
       digitalWrite(FLASH_LED_PIN, flashState);
     }
 
-    if (text == "/photo")
-    {
+    if (text == "/?photo") {
       fb = NULL;
       // Take Picture with Camera
       fb = esp_camera_fb_get();
-      if (!fb)
-      {
+      if (!fb) {
         Serial.println("Camera capture failed");
         bot.sendMessage(chat_id, "Camera capture failed", "");
         return;
@@ -91,8 +76,7 @@ void handleNewMessages(int numNewMessages)
       esp_camera_fb_return(fb);
     }
 
-    if (text == "/start")
-    {
+    if (text == "/start") {
       String welcome = "Gutenmorgen!\n\n";
       welcome += "/photo : will take a photo\n";
       welcome += "/flash : toggle flash LED (VERY BRIGHT!)\n";
@@ -101,56 +85,41 @@ void handleNewMessages(int numNewMessages)
   }
 }
 
-bool isMoreDataAvailable()
-{
-  if (dataAvailable)
-  {
+bool isMoreDataAvailable() {
+  if (dataAvailable) {
     dataAvailable = false;
     return true;
   }
-  else
-  {
+  else {
     return false;
   }
 }
 
-byte *getNextBuffer()
-{
-  if (fb)
-  {
+byte *getNextBuffer() {
+  if (fb) {
     return fb->buf;
   }
-  else
-  {
+  else {
     return nullptr;
   }
 }
 
-int getNextBufferLen()
-{
-  if (fb)
-  {
+int getNextBufferLen() {
+  if (fb) {
     return fb->len;
   }
-  else
-  {
+  else {
     return 0;
   }
 }
 
-void ESP32_Cam_setup()
-{
-  Serial.begin(115200);
-  Serial.println();
-
+void ESP32_Cam_setup() {
   pinMode(FLASH_LED_PIN, OUTPUT);
   digitalWrite(FLASH_LED_PIN, flashState); //defaults to low
 
-  if (!setupCamera())
-  {
+  if (!setupCamera()) {
     Serial.println("Camera Setup Failed!");
-    while (true)
-    {
+    while (true) {
       delay(100);
     }
   }
@@ -160,8 +129,7 @@ void ESP32_Cam_setup()
   Serial.print(WIFI_SSID);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
-  while (WiFi.status() != WL_CONNECTED)
-  {
+  while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
     delay(500);
   }
@@ -171,8 +139,7 @@ void ESP32_Cam_setup()
   Serial.print("Retrieving time: ");
   configTime(0, 0, "pool.ntp.org"); // get UTC time via NTP
   time_t now = time(nullptr);
-  while (now < 24 * 3600)
-  {
+  while (now < 24 * 3600) {
     Serial.print(".");
     delay(100);
     now = time(nullptr);
@@ -183,14 +150,11 @@ void ESP32_Cam_setup()
   bot.longPoll = 60;
 }
 
-void ESP32_Cam_loop()
-{
-  if (millis() - bot_lasttime > BOT_MTBS)
-  {
+void ESP32_Cam_loop() {
+  if (millis() - bot_lasttime > BOT_MTBS) {
     int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
 
-    while (numNewMessages)
-    {
+    while (numNewMessages) {
       Serial.println("got response");
       handleNewMessages(numNewMessages);
       numNewMessages = bot.getUpdates(bot.last_message_received + 1);
