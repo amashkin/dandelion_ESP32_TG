@@ -56,7 +56,8 @@ void handleNewMessages(int numNewMessages) {
       digitalWrite(FLASH_LED_PIN, flashState);
     }
 
-    if (text == "/?photo") {
+    if (text == "/photo") {
+      Serial.println("Command: send the photo");
       fb = NULL;
       // Take Picture with Camera
       fb = esp_camera_fb_get();
